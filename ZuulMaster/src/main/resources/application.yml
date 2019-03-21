@@ -1,0 +1,57 @@
+server:
+  port: 9999
+zuul:
+  sensitive-headers:  #此处配置为空，修改原来默认会排除的列表值 sensitiveHeaders =   "Cookie", "Set-Cookie","Authorization"
+#如果路由方式是serviceId的方式，那么ribbon的生效，如果是url的方式，则zuul.host开头的生效
+# host:
+#   connect-timeout-millis: 9000
+#   socket-timeout-millis: 20000
+  routes:
+    api-1:
+      path: /us/v1/**
+    api-2:
+      path: /tv/**
+      url: http://localhost:8083/
+
+api-1:
+  ribbon:
+    listOfServers: http://localhost:8081,http://localhost:8082
+    # 负载策略
+    NFLoadBalancerRuleClassName: com.netflix.loadbalancer.ZoneAvoidanceRule
+ribbon:
+  eureka:
+    enabled: false
+  ReadTimeout: 1500       #4倍的取值
+  ConnectTimeout: 1500
+#设置API网关中路由转发请求的HystrixCommand超时时间，单位为毫秒。
+#当路由转发请求的命令执行时间超过该配置值后，Hystrix会将该执行命令标记为TIMEOUT并抛出异常。
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 8000
+
+#日志配置文件位置
+logging:
+  config : classpath:log/logback-spring.xml
+#使用配置动态更新要求设置为false
+management:
+  security:
+    enabled: false
+
+#校验token服务器接口
+custom:
+   auth:
+      token:
+         url: http://localhost:8888/check
+#登录接口，及不需要验证token的接口
+   not:
+      check:
+         uri: /us/v1/v1/auth/tokens,/us/v1/v1/auth/visitor-tokens
+#限流相关，是否限流
+   limit:
+      orlimit: false
+#限流相关，每秒允许的访问数
+      number: 1000
